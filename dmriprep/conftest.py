@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import nibabel as nb
 import pytest
+import bids
 from dipy.data.fetcher import _make_fetcher, UW_RW_URL
 
 _dipy_datadir_root = os.getenv('DMRIPREP_TESTS_DATA') or Path.home()
@@ -48,3 +49,37 @@ def doctest_autoimport(doctest_namespace):
 def dipy_test_data(scope='session'):
     """Create a temporal directory shared across tests to pull data in."""
     return _sherbrooke_data
+
+@pytest.fixture
+def input_dir_tree(tmp_path):
+    data = {"002547": [1,2], "002548": [1], "002449": [1,2,3]}
+    for sub, session in data.items():
+        for ses in session:
+            info = f"sub-{sub}/ses-{ses}"
+            anat = os.path.join(tmp_path, info, "anat")
+            dwi = os.path.join(tmp_path, info, "dwi")
+            # make directories and files
+            os.makedirs(anat)
+            os.makedirs(dwi)
+            tmpfilepath = os.path.join(anat, f"sub-{sub}_ses-{ses}_T1w.nii.gz")
+            with open(tmpfilepath, "x") as f:
+                f.write("placeholder text")
+            tmpfilepath = os.path.join(dwi, f"sub-{sub}_ses-{ses}_dwi.bval")
+            with open(tmpfilepath, "x") as f:
+                f.write("placeholder text")
+            tmpfilepath = os.path.join(dwi, f"sub-{sub}_ses-{ses}_dwi.bvec")
+            with open(tmpfilepath, "x") as f:
+                f.write("placeholder text")
+            tmpfilepath = os.path.join(dwi, f"sub-{sub}_ses-{ses}_dwi.nii.gz")
+            with open(tmpfilepath, "x") as f:
+                f.write("placeholder text")
+    #with open(os.path.join(tmp_path,"dataset_description.json"), "x") as f:
+    #    f.write("placeholder text")
+
+    name = Path(tmp_path).stem
+    vers = bids.__version__
+    out = dict(Name=name, BIDSVersion=vers)
+    with open(os.path.join(tmp_path, "dataset_description.json"), "x") as f:
+        f.write('{"BIDSVersion": "1.0.0", "License": "This dataset is made available under the Public Domain Dedication and License v1.0, whose full text can be found at www.opendatacommon We hope that all users will follow the ODC Attribution/Share-Aliommunityin particular, while not legally required, we hope that all users of the data will acknowledge the OpenfMRI project and NSF Grant OCI-1131441  Poldrack, PI in any publications.","Name": "Prefrontal-Subcortical Pathways Mediating Successful Emotion Regulation","ReferencesAndLinks": ["Wager, T.D., Davidson, M.L., Hughes, B.L., Lindquist, M.A., Ochsner, K.N. (2008). Prefrontal-subcortical pathways mediating successful emotion regulation. Neuron, 59(6):1037-50. doi: 10.1016/j.neuron.2008.09.006"]}')
+
+    return tmp_path, data

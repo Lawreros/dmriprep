@@ -3,7 +3,7 @@ from packaging.version import Version
 import pytest
 from .. import version as _version
 from ... import __about__
-from ..run import get_parser, check_deps
+from ..run import get_parser, check_deps, parse_spaces
 
 
 @pytest.mark.parametrize(('current', 'latest'), [
@@ -142,3 +142,19 @@ license file at several paths, in this order: 1) command line argument ``--fs-li
     # Check workflow for missing commands
     missing = check_deps(dmriprep_wf)
     assert missing==[]
+
+def test_parse_spaces(input_dir_tree):
+    from pathlib import Path
+    import logging
+    import os
+    import sys
+    from multiprocessing import set_start_method, Process, Manager
+
+    tmp_path, data = input_dir_tree
+
+    #set_start_method('forkserver')
+    sys.argv=[str(tmp_path),str(tmp_path)+'/derivatives',"participant"]
+    opts = get_parser().parse_args(sys.argv)
+
+    output_spaces = parse_spaces(opts)
+    assert output_spaces
